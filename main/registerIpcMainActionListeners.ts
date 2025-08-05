@@ -254,7 +254,7 @@ export default function registerIpcMainActionListeners(main: Main) {
   ipcMain.handle(
     IPC_ACTIONS.SEND_API_REQUEST,
     async (e, endpoint: string, options: RequestInit | undefined) => {
-      return sendAPIRequest(endpoint, options);
+      return sendAPIRequest(endpoint, options as import('node-fetch').RequestInit);
     }
   );
 
