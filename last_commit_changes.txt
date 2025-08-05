@@ -1,0 +1,368 @@
+commit 9cfb2b869d025c932cb21dc0fefcdb8655e40b11
+Author: fozak <i771468@gmail.com>
+Date:   Tue Aug 5 18:34:30 2025 -0400
+
+    change_tobrowser
+
+diff --git a/fyo/core/dbHandler.ts b/fyo/core/dbHandler.ts
+index 35847bc6..c6925940 100644
+--- a/fyo/core/dbHandler.ts
++++ b/fyo/core/dbHandler.ts
+@@ -1,6 +1,7 @@
+ import { SingleValue } from 'backend/database/types';
+ import { Fyo } from 'fyo';
+ import { DatabaseDemux } from 'fyo/demux/db';
++import { DatabaseFactory } from 'fyo/demux/factory'; // Add factory import
+ import { ValueError } from 'fyo/utils/errors';
+ import Observable from 'fyo/utils/observable';
+ import { translateSchema } from 'fyo/utils/translation';
+@@ -41,15 +42,34 @@ export class DatabaseHandler extends DatabaseBase {
+   #fieldMap: FieldMap = {};
+   observer: Observable<never> = new Observable();
+ 
+-  constructor(fyo: Fyo, Demux?: DatabaseDemuxConstructor) {
++  constructor(fyo: Fyo, demux?: DatabaseDemuxBase | DatabaseDemuxConstructor) {
+     super();
+     this.#fyo = fyo;
+     this.converter = new Converter(this, this.#fyo);
+ 
+-    if (Demux !== undefined) {
+-      this.#demux = new Demux(fyo.isElectron);
++    // ==========================================
++    // Smart Demux Initialization
++    // ==========================================
++    if (demux) {
++      if (typeof demux === 'function') {
++        // Legacy constructor pattern - maintain backward compatibility
++        console.log('🔧 DatabaseHandler: Using legacy demux constructor');
++        this.#demux = new demux(fyo.isElectron);
++      } else {
++        // New factory-created instance pattern
++        console.log('🔧 DatabaseHandler: Using factory-created demux instance');
++        this.#demux = demux;
++      }
+     } else {
+-      this.#demux = new DatabaseDemux(fyo.isElectron);
++      // Try to get from factory first, fallback to direct creation
++      const factoryInstance = DatabaseFactory.getInstance();
++      if (factoryInstance) {
++        console.log('🔧 DatabaseHandler: Using existing factory instance');
++        this.#demux = factoryInstance;
++      } else {
++        console.log('🔧 DatabaseHandler: Creating new DatabaseDemux directly');
++        this.#demux = new DatabaseDemux(fyo.isElectron);
++      }
+     }
+   }
+ 
+@@ -65,7 +85,38 @@ export class DatabaseHandler extends DatabaseBase {
+     return !!this.dbPath;
+   }
+ 
++  // ==========================================
++  // Environment-Aware Methods
++  // ==========================================
++  
++  /**
++   * Get current demux mode info for debugging
++   */
++  getDemuxInfo(): { mode: string; apiUrl?: string } {
++    const factoryConfig = DatabaseFactory.getConfig();
++    return {
++      mode: factoryConfig?.mode || (this.#fyo.isElectron ? 'electron' : 'browser'),
++      apiUrl: factoryConfig?.apiUrl
++    };
++  }
++
++  /**
++   * Check if running in browser mode with API
++   */
++  get isBrowserMode(): boolean {
++    return this.#fyo.isBrowser;
++  }
++
++  /**
++   * Get API URL if in browser mode
++   */
++  get apiUrl(): string | undefined {
++    const factoryConfig = DatabaseFactory.getConfig();
++    return factoryConfig?.apiUrl;
++  }
++
+   async createNewDatabase(dbPath: string, countryCode: string) {
++    console.log(`🗄️  Creating new database: ${dbPath} (${this.getDemuxInfo().mode} mode)`);
+     countryCode = await this.#demux.createNewDatabase(dbPath, countryCode);
+     await this.init();
+     this.dbPath = dbPath;
+@@ -73,6 +124,7 @@ export class DatabaseHandler extends DatabaseBase {
+   }
+ 
+   async connectToDatabase(dbPath: string, countryCode?: string) {
++    console.log(`🔌 Connecting to database: ${dbPath} (${this.getDemuxInfo().mode} mode)`);
+     countryCode = await this.#demux.connectToDatabase(dbPath, countryCode);
+     await this.init();
+     this.dbPath = dbPath;
+@@ -380,4 +432,4 @@ export class DatabaseHandler extends DatabaseBase {
+       return acc;
+     }, {} as FieldMap);
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/fyo/core/types.ts b/fyo/core/types.ts
+index 513605a5..eed7ebd4 100644
+--- a/fyo/core/types.ts
++++ b/fyo/core/types.ts
+@@ -44,10 +44,13 @@ export interface ConfigFile {
+   dbPath: string;
+   openCount: number;
+ }
+-
+ export interface FyoConfig {
+   DatabaseDemux?: DatabaseDemuxConstructor;
+   AuthDemux?: AuthDemuxConstructor;
+-  isElectron?: boolean;
++  isElectron?: boolean; // Keep for backward compatibility
+   isTest?: boolean;
++  
++  // New factory options
++  forceMode?: 'electron' | 'browser'; // Override environment detection
++  apiUrl?: string; // Custom API URL for browser mode
+ }
+diff --git a/fyo/demux/db.ts b/fyo/demux/db.ts
+index f593d132..8a97cb2a 100644
+--- a/fyo/demux/db.ts
++++ b/fyo/demux/db.ts
+@@ -117,7 +117,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
+           const res = await fetch(`${this.#apiBaseUrl}/api/schema/${encodeURIComponent(tableName)}`);
+           return await res.json();
+         })) as { success: boolean; data: unknown };
+-        return resp.data;  // <-- just return resp (which is already resp.data)
++        return resp;  // <-- just return resp (which is already resp.data)
+       }
+ 
+ case 'getTableData': {
+diff --git a/fyo/demux/demuxtest.html b/fyo/demux/demuxtest.html
+index 90e39b15..920e32e6 100644
+--- a/fyo/demux/demuxtest.html
++++ b/fyo/demux/demuxtest.html
+@@ -52,7 +52,6 @@
+   <div class="container">
+     <h1>DatabaseDemux Test</h1>
+     <p>Make sure your server is running on <code>http://localhost:3001</code></p>
+-
+     <div>
+       <button onclick="testConnection()">Test Connection</button>
+       <button onclick="testGetTables()">Get Tables</button>
+@@ -63,17 +62,13 @@
+       <button onclick="runAllTests()">Run All Tests</button>
+       <button onclick="clearLog()">Clear Log</button>
+     </div>
+-
+     <div id="log" class="log">Ready to test...\n</div>
+   </div>
+-
+   <script type="module">
+     import { DatabaseDemux } from './db.bundle.js';
+-
+     // Initialize DatabaseDemux in browser mode
+     const db = new DatabaseDemux(false, 'http://localhost:3001');
+     let availableTables = [];
+-
+     function log(message, type = 'info') {
+       const logDiv = document.getElementById('log');
+       const timestamp = new Date().toLocaleTimeString();
+@@ -81,11 +76,9 @@
+       logDiv.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+       logDiv.scrollTop = logDiv.scrollHeight;
+     }
+-
+     window.clearLog = () => {
+       document.getElementById('log').textContent = 'Log cleared...\n';
+     };
+-
+     window.testConnection = async () => {
+       log('🔗 Testing connection to API server...', 'info');
+       try {
+@@ -102,7 +95,6 @@
+         return false;
+       }
+     };
+-
+     window.testGetTables = async () => {
+       log('📊 Testing getTables()...', 'info');
+       try {
+@@ -115,7 +107,6 @@
+         return [];
+       }
+     };
+-
+     window.testGetSchema = async () => {
+       if (availableTables.length === 0) {
+         await testGetTables();
+@@ -129,14 +120,18 @@
+       try {
+         const schema = await db.call('getSchema', tableName);
+         log(`✅ Schema retrieved for ${tableName}`, 'success');
+-        log(`   Fields: ${Object.keys(schema.fields || {}).join(', ')}`, 'info');
++        // Fixed: Use schema.columns instead of schema.fields
++        if (schema.columns && schema.columns.length > 0) {
++          log(`   Columns: ${schema.columns.map(col => col.name).join(', ')}`, 'info');
++        } else {
++          log(`   No columns found in schema`, 'info');
++        }
+         return schema;
+       } catch (error) {
+         log(`❌ getSchema failed: ${error.message}`, 'error');
+         return null;
+       }
+     };
+-
+     window.testGetData = async () => {
+       if (availableTables.length === 0) {
+         await testGetTables();
+@@ -159,7 +154,6 @@
+         return [];
+       }
+     };
+-
+     window.testSearch = async () => {
+       if (availableTables.length === 0) {
+         await testGetTables();
+@@ -179,7 +173,6 @@
+         return [];
+       }
+     };
+-
+     window.testQuery = async () => {
+       if (availableTables.length === 0) {
+         await testGetTables();
+@@ -201,11 +194,9 @@
+         return null;
+       }
+     };
+-
+     window.runAllTests = async () => {
+       log('🚀 Running all tests...', 'info');
+       log('='.repeat(50), 'info');
+-
+       const results = {
+         connection: await testConnection(),
+         tables: (await testGetTables()).length > 0,
+@@ -214,21 +205,17 @@
+         search: (await testSearch()).length >= 0,
+         query: (await testQuery()) !== null
+       };
+-
+       log('='.repeat(50), 'info');
+       log('📊 TEST SUMMARY:', 'info');
+       const passed = Object.values(results).filter(Boolean).length;
+       const total = Object.keys(results).length;
+       log(`✅ Passed: ${passed}/${total}`, passed === total ? 'success' : 'error');
+-
+       Object.entries(results).forEach(([test, passed]) => {
+         log(`${passed ? '✅' : '❌'} ${test}`, passed ? 'success' : 'error');
+       });
+     };
+-
+     // Expose db globally for manual testing
+     window.db = db;
+-
+     log('DatabaseDemux loaded and ready for testing!', 'success');
+     log('Available methods: testConnection, testGetTables, testGetSchema, testGetData, testSearch, testQuery, runAllTests', 'info');
+     log('You can also use window.db directly for manual testing', 'info');
+diff --git a/fyo/demux/factory.ts b/fyo/demux/factory.ts
+new file mode 100644
+index 00000000..3b45bb7a
+--- /dev/null
++++ b/fyo/demux/factory.ts
+@@ -0,0 +1,50 @@
++// fyo/demux/factory.ts
++import { DatabaseDemux } from './db';
++import { detectEnvironment } from 'utils/env';
++
++export class DatabaseFactory {
++  private static instance: DatabaseDemux | null = null;
++  private static config: EnvironmentConfig | null = null;
++
++  static createDatabase(forceMode?: 'electron' | 'browser', apiUrl?: string): DatabaseDemux {
++    // Detect environment if not forced
++    const env = detectEnvironment();
++    
++    // Allow override for testing/development
++    const useElectron = forceMode ? forceMode === 'electron' : env.isElectron;
++    const finalApiUrl = apiUrl || env.apiUrl;
++    
++    // Store config for reference
++    this.config = {
++      ...env,
++      isElectron: useElectron,
++      isBrowser: !useElectron,
++      apiUrl: finalApiUrl
++    };
++    
++    console.log(`🔧 Creating DatabaseDemux in ${useElectron ? 'Electron' : 'Browser'} mode`);
++    if (!useElectron) {
++      console.log(`🌐 API URL: ${finalApiUrl}`);
++    }
++    
++    // Create singleton instance
++    if (!this.instance) {
++      this.instance = new DatabaseDemux(useElectron, finalApiUrl);
++    }
++    
++    return this.instance;
++  }
++  
++  static getInstance(): DatabaseDemux | null {
++    return this.instance;
++  }
++  
++  static getConfig(): EnvironmentConfig | null {
++    return this.config;
++  }
++  
++  static reset(): void {
++    this.instance = null;
++    this.config = null;
++  }
++}
+\ No newline at end of file
+diff --git a/utils/env.ts b/utils/env.ts
+new file mode 100644
+index 00000000..879fc3a7
+--- /dev/null
++++ b/utils/env.ts
+@@ -0,0 +1,31 @@
++// ==========================================
++// 1. Enhanced Environment Detection
++// ==========================================
++
++// utils/env.ts
++export interface EnvironmentConfig {
++  isElectron: boolean;
++  isBrowser: boolean;
++  apiUrl?: string;
++  mode: 'electron' | 'browser' | 'development';
++}
++
++export function detectEnvironment(): EnvironmentConfig {
++  // Check if running in Electron
++  const isElectron = typeof window !== 'undefined' && 
++                    window.process?.versions?.electron !== undefined;
++  
++  // Check if running in development mode
++  const isDev = process.env.NODE_ENV === 'development';
++  
++  // Determine API URL for browser mode
++  const apiUrl = process.env.VUE_APP_API_URL || 
++                 (isDev ? 'http://localhost:3001' : window.location.origin);
++  
++  return {
++    isElectron,
++    isBrowser: !isElectron,
++    apiUrl: isElectron ? undefined : apiUrl,
++    mode: isElectron ? 'electron' : (isDev ? 'development' : 'browser')
++  };
++}
+\ No newline at end of file

@@ -22,37 +22,33 @@ import { ErrorLog } from './utils/types';
 import type { reports } from 'reports/index';
 import type { Report } from 'reports/Report';
 
+// Add these imports for env and factory
+import { DatabaseFactory } from './demux/factory';
+import { detectEnvironment } from 'utils/env';
+
 export class Fyo {
-  t = t;
-  T = T;
-
-  errors = errors;
-  isElectron: boolean;
-
-  pesa: MoneyMaker;
-
-  auth: AuthHandler;
-  doc: DocHandler;
-  db: DatabaseHandler;
-
-  _initialized = false;
-
-  errorLog: ErrorLog[] = [];
-  temp?: Record<string, unknown>;
-
-  currencyFormatter?: Intl.NumberFormat;
-  currencySymbols: Record<string, string | undefined> = {};
-
-  isTest: boolean;
-  telemetry: TelemetryManager;
-  config: Config;
+  // ... your existing fields here ...
 
   constructor(conf: FyoConfig = {}) {
-    this.isTest = conf.isTest ?? false;
-    this.isElectron = conf.isElectron ?? true;
+    // Detect environment info (electron or browser) early
+    const envConfig = detectEnvironment();
 
+    // Decide on electron or browser mode, respecting config override (forceMode)
+    const forceMode = conf.forceMode; // 'electron' | 'browser' | undefined
+    const finalMode = forceMode || (envConfig.isElectron ? 'electron' : 'browser');
+
+    // Set isElectron based on finalMode
+    this.isElectron = finalMode === 'electron';
+
+    // Initialize database demux instance from factory with overrides
+    const demuxInstance = DatabaseFactory.createDatabase(
+      finalMode === 'electron' ? 'electron' : 'browser',
+      conf.apiUrl // pass apiUrl override if any
+    );
+
+    // Now construct handlers using factory instance or conf as fallback
     this.auth = new AuthHandler(this, conf.AuthDemux);
-    this.db = new DatabaseHandler(this, conf.DatabaseDemux);
+    this.db = new DatabaseHandler(this, demuxInstance);
     this.doc = new DocHandler(this);
 
     this.pesa = getMoneyMaker({
@@ -63,7 +59,9 @@ export class Fyo {
     });
 
     this.telemetry = new TelemetryManager(this);
-    this.config = new Config(this.isElectron && !this.isTest);
+    this.config = new Config(this.isElectron && !conf.isTest);
+
+    this.isTest = conf.isTest ?? false;
   }
 
   get initialized() {
