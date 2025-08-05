@@ -144,30 +144,30 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         return json;
       }
 
-case 'searchRecords': {
-  const tableName = args[0] as string;
-  const q = args[1] as string;
-  const field = (args[2] as string) || 'name';
-  const limit = (args[3] as number) || 50;
-  const params = new URLSearchParams({ q, field, limit: limit.toString() });
+      case 'searchRecords': {
+        const tableName = args[0] as string;
+        const q = args[1] as string;
+        const field = (args[2] as string) || 'name';
+        const limit = (args[3] as number) || 50;
+        const params = new URLSearchParams({ q, field, limit: limit.toString() });
 
-  const res = await fetch(`${this.#apiBaseUrl}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
-  const json = await res.json();
+        const res = await fetch(`${this.#apiBaseUrl}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
+        const json = await res.json();
 
-  if (!json || typeof json !== 'object') {
-    throw new Error(`Invalid response for search in ${tableName}`);
-  }
+        if (!json || typeof json !== 'object') {
+          throw new Error(`Invalid response for search in ${tableName}`);
+        }
 
-  if (!json.success) {
-    throw new Error(`Failed to search in ${tableName}`);
-  }
+        if (!json.success) {
+          throw new Error(`Failed to search in ${tableName}`);
+        }
 
-  if (!json.data || !Array.isArray(json.data.records)) {
-    throw new Error(`Malformed data received for ${tableName} search`);
-  }
+        if (!json.data || !Array.isArray(json.data.records)) {
+          throw new Error(`Malformed data received for ${tableName} search`);
+        }
 
-  return json.data.records;
-}
+        return json.data.records;
+      }
 
 
       case 'insertRecord': {
