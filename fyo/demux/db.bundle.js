@@ -140,7 +140,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get data for ${tableName}`);
-        return json;
+        return json.data;
       }
       case "getRecord": {
         const tableName = args[0];
@@ -149,7 +149,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get record ${id} from ${tableName}`);
-        return json;
+        return json.data;
       }
       case "searchRecords": {
         const tableName = args[0];
@@ -181,7 +181,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to insert record into ${tableName}`);
-        return json;
+        return json.data;
       }
       case "updateRecord": {
         const tableName = args[0];
@@ -195,7 +195,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to update record ${id} in ${tableName}`);
-        return json;
+        return json.data;
       }
       case "deleteRecord": {
         const tableName = args[0];
@@ -206,7 +206,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to delete record ${id} from ${tableName}`);
-        return json;
+        return json.data;
       }
       case "runQuery": {
         const sql = args[0];
@@ -219,7 +219,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to run query`);
-        return json;
+        return json.data;
       }
       case "getMetadata": {
         const tableName = args[0];
@@ -227,7 +227,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get metadata for ${tableName}`);
-        return json;
+        return json.data;
       }
       case "getSingleDoc": {
         const parent = args[0];
@@ -235,7 +235,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get single doc ${parent}`);
-        return json;
+        return json.data;
       }
       default:
         throw new NotImplemented(`Method ${method} is not implemented in browser mode`);
