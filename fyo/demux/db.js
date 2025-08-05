@@ -1,7 +1,7 @@
 var _DatabaseDemux_instances, _DatabaseDemux_isElectron, _DatabaseDemux_apiBaseUrl, _DatabaseDemux_handleDBCall;
 import { __classPrivateFieldGet, __classPrivateFieldSet } from "tslib";
 import { DatabaseError, NotImplemented } from 'fyo/utils/errors';
-import { DatabaseDemuxBase } from 'utils/db/types';
+import { DatabaseDemuxBase } from 'utils/db/types'; // Removed DatabaseMethod import; using string instead
 export class DatabaseDemux extends DatabaseDemuxBase {
     constructor(isElectron, apiBaseUrl) {
         super();
@@ -23,14 +23,14 @@ export class DatabaseDemux extends DatabaseDemuxBase {
             }));
         }
         // Browser mode: fetch all tables, then schemas
-        const tablesResp = await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
+        const tablesResp = (await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
             const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/tables`);
             return await res.json();
-        });
+        }));
         const tables = tablesResp.success ? tablesResp.data : [];
         const schemas = await Promise.all(tables.map(async (table) => {
             const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/schema/${encodeURIComponent(table)}`);
-            const json = await res.json();
+            const json = (await res.json());
             if (!json.success)
                 throw new Error(`Failed to fetch schema for table ${table}`);
             return json.data;
@@ -57,6 +57,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         }
         throw new NotImplemented('Connecting to database not supported in browser mode');
     }
+    // Using `method: string` instead of DatabaseMethod for flexibility
     async call(method, ...args) {
         if (__classPrivateFieldGet(this, _DatabaseDemux_isElectron, "f")) {
             return await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
@@ -65,17 +66,21 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         }
         // Browser mode: map method to API calls
         switch (method) {
-            case 'getTables':
-                return (await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
+            case 'getTables': {
+                const resp = (await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
                     const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/tables`);
                     return await res.json();
-                })).data;
-            case 'getSchema':
-                return (await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
-                    const tableName = args[0];
+                }));
+                return resp.data;
+            }
+            case 'getSchema': {
+                const tableName = args[0];
+                const resp = (await __classPrivateFieldGet(this, _DatabaseDemux_instances, "m", _DatabaseDemux_handleDBCall).call(this, async () => {
                     const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/schema/${encodeURIComponent(tableName)}`);
                     return await res.json();
-                })).data;
+                }));
+                return resp.data;
+            }
             case 'getTableData': {
                 const tableName = args[0];
                 const options = args[1];
@@ -89,7 +94,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                 if (options?.order)
                     params.append('order', options.order);
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/data/${encodeURIComponent(tableName)}?${params.toString()}`);
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to get data for ${tableName}`);
                 return json.data;
@@ -98,7 +103,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                 const tableName = args[0];
                 const id = args[1];
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/data/${encodeURIComponent(tableName)}/${encodeURIComponent(String(id))}`);
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to get record ${id} from ${tableName}`);
                 return json.data;
@@ -110,7 +115,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                 const limit = args[3] || 50;
                 const params = new URLSearchParams({ q, field, limit: limit.toString() });
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to search in ${tableName}`);
                 return json.data.records;
@@ -123,7 +128,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                 });
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to insert record into ${tableName}`);
                 return json.data;
@@ -137,7 +142,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                 });
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to update record ${id} in ${tableName}`);
                 return json.data;
@@ -148,7 +153,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/data/${encodeURIComponent(tableName)}/${encodeURIComponent(String(id))}`, {
                     method: 'DELETE',
                 });
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to delete record ${id} from ${tableName}`);
                 return json.data;
@@ -161,7 +166,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sql, params }),
                 });
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to run query`);
                 return json.data;
@@ -169,7 +174,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
             case 'getMetadata': {
                 const tableName = args[0];
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/meta/${encodeURIComponent(tableName)}`);
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to get metadata for ${tableName}`);
                 return json.data;
@@ -177,7 +182,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
             case 'getSingleDoc': {
                 const parent = args[0];
                 const res = await fetch(`${__classPrivateFieldGet(this, _DatabaseDemux_apiBaseUrl, "f")}/api/single/${encodeURIComponent(parent)}`);
-                const json = await res.json();
+                const json = (await res.json());
                 if (!json.success)
                     throw new Error(`Failed to get single doc ${parent}`);
                 return json.data;
@@ -199,7 +204,6 @@ _DatabaseDemux_isElectron = new WeakMap(), _DatabaseDemux_apiBaseUrl = new WeakM
     const response = await func();
     if (!__classPrivateFieldGet(this, _DatabaseDemux_isElectron, "f")) {
         // In browser mode, response might be the direct data or error object
-        // Throw if response has error property
         if (response?.error) {
             const err = response.error;
             const dberror = new DatabaseError(`${err.name || 'Error'}\n${err.message || 'Unknown error'}`);
