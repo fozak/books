@@ -28,3 +28,93 @@ yarn-error.log*
 #Electron-builder output
 /dist_electron
 log_creds.txt
+
+# Existing Frappe Books ignores (keep what's already there)
+
+# API Build Files and Distribution
+dist/
+build/
+api-server/dist/
+api-server/build/
+
+# Compiled JavaScript files
+*.js.map
+api-server/*.js
+api-server/**/*.js
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+frappe-books*.db
+frappe-books-dev.db
+frappe-books-test.db
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+*.log
+logs/
+api-server/logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Node.js dependencies (if not already there)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# API server specific
+api-server/node_modules/
+api-server/.env
+api-server/logs/
+api-server/temp/
+
+# Backup files
+*.backup
+*.bak
+
+# Lock files (choose one based on your package manager)
+# package-lock.json  # Uncomment if using yarn
+# yarn.lock         # Uncomment if using npm
