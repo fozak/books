@@ -22,7 +22,6 @@
     "api:start": "ts-node api-server/index.ts",
     "api:build": "tsc api-server/index.ts --outDir dist/api",
     "api:prod": "node dist/api/index.js"
-
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.4.2",
