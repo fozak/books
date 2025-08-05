@@ -1,18 +1,13 @@
 import path from 'path';
+const { default: FrappeBooksAPI } = await import('./server.js');
 
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'frappe-books.db');
 
-console.log('🔧 Starting Frappe Books API Server...');
-console.log(`📁 Database path: ${DB_PATH}`);
-console.log(`🔌 Port: ${PORT}`);
-
 const main = async () => {
-  const { default: FrappeBooksAPI } = await import('./server.ts'); // 👈 NOTE: .js extension required for ESM
-
   const api = new FrappeBooksAPI(DB_PATH);
 
-  // Graceful shutdown handlers
+  // Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {
     console.log(`\n📤 Received ${signal}. Shutting down gracefully...`);
     try {
@@ -28,21 +23,24 @@ const main = async () => {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', (error: unknown) => {
     console.error('❌ Uncaught Exception:', error);
     process.exit(1);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on('unhandledRejection', (reason: unknown, promise: Promise<any>) => {
     console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
     process.exit(1);
   });
 
   // Start the server
-  await api.start(PORT).catch((error) => {
+  try {
+    await api.start(PORT);
+    console.log(`🚀 Server is running on port ${PORT}`);
+  } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
-  });
+  }
 };
 
 main();

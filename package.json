@@ -19,7 +19,7 @@
     "lint": "eslint . --ext ts,vue",
     "format": "prettier --write .",
     "api:dev": "node --loader ts-node/esm api-server/dev.ts",
-    "api:start": "node --import \"data:text/javascript,import { register } from \\\"node:module\\\"; import { pathToFileURL } from \\\"node:url\\\"; register(\\\"ts-node/esm\\\", pathToFileURL(\\\"./\\\"));\" api-server/main.ts",
+    "api:start": "node --loader ts-node/esm api-server/main.ts",
     "api:build": "tsc api-server/main.ts --outDir dist/api --module commonjs --target es2020",
     "api:prod": "node dist/api/main.js"
   },

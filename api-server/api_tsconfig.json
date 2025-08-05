@@ -2,8 +2,9 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "ESNext",                 // 👈 necessary for ESM
     "lib": ["ES2020"],
+    "moduleResolution": "node",         // 👈 required for ESM resolution
     "outDir": "../dist/api",
     "rootDir": ".",
     "strict": true,
@@ -14,11 +15,6 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": [
-    "**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["**/*"],
+  "exclude": ["node_modules", "dist"]
 }
