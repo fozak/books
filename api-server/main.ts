@@ -1,5 +1,6 @@
 import path from 'path';
-const { default: FrappeBooksAPI } = await import('./server.js');
+import FrappeBooksAPI from './server.js';
+
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'frappe-books.db');
