@@ -121,15 +121,19 @@ export class DatabaseDemux extends DatabaseDemuxBase {
       }
 
 case 'getTableData': {
-  const [tableName, options] = args as [string, any];
+  const tableName = args[0] as string;
+  const options = args[1] as { limit?: number; offset?: number; orderBy?: string; order?: string } | undefined;
   const params = new URLSearchParams();
-  if (options?.limit) params.set('limit', options.limit.toString());
-  if (options?.offset) params.set('offset', options.offset.toString());
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.offset) params.append('offset', options.offset.toString());
+  if (options?.orderBy) params.append('orderBy', options.orderBy);
+  if (options?.order) params.append('order', options.order);
 
-  return await this.#handleDBCall(async () => {
-    const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}?${params}`);
-    return await res.json(); // this gets unwrapped by #handleDBCall
-  });
+  const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}?${params.toString()}`);
+  const json = (await res.json()) as { success: boolean; data: any };
+  if (!json.success) throw new Error(`Failed to get data for ${tableName}`);
+
+  return json.data.records; // ✅ ONLY return the array of records
 }
 
       case 'getRecord': {
