@@ -117,7 +117,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
           const res = await fetch(`${this.#apiBaseUrl}/api/schema/${encodeURIComponent(tableName)}`);
           return await res.json();
         })) as { success: boolean; data: unknown };
-        return resp.data;  // <-- just return resp (which is already resp.data)
+        return resp;  // <-- just return resp (which is already resp.data)
       }
 
 case 'getTableData': {

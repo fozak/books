@@ -1,6 +1,7 @@
 import { SingleValue } from 'backend/database/types';
 import { Fyo } from 'fyo';
 import { DatabaseDemux } from 'fyo/demux/db';
+import { DatabaseFactory } from 'fyo/demux/factory'; // Add factory import
 import { ValueError } from 'fyo/utils/errors';
 import Observable from 'fyo/utils/observable';
 import { translateSchema } from 'fyo/utils/translation';
@@ -41,15 +42,34 @@ export class DatabaseHandler extends DatabaseBase {
   #fieldMap: FieldMap = {};
   observer: Observable<never> = new Observable();
 
-  constructor(fyo: Fyo, Demux?: DatabaseDemuxConstructor) {
+  constructor(fyo: Fyo, demux?: DatabaseDemuxBase | DatabaseDemuxConstructor) {
     super();
     this.#fyo = fyo;
     this.converter = new Converter(this, this.#fyo);
 
-    if (Demux !== undefined) {
-      this.#demux = new Demux(fyo.isElectron);
+    // ==========================================
+    // Smart Demux Initialization
+    // ==========================================
+    if (demux) {
+      if (typeof demux === 'function') {
+        // Legacy constructor pattern - maintain backward compatibility
+        console.log('🔧 DatabaseHandler: Using legacy demux constructor');
+        this.#demux = new demux(fyo.isElectron);
+      } else {
+        // New factory-created instance pattern
+        console.log('🔧 DatabaseHandler: Using factory-created demux instance');
+        this.#demux = demux;
+      }
     } else {
-      this.#demux = new DatabaseDemux(fyo.isElectron);
+      // Try to get from factory first, fallback to direct creation
+      const factoryInstance = DatabaseFactory.getInstance();
+      if (factoryInstance) {
+        console.log('🔧 DatabaseHandler: Using existing factory instance');
+        this.#demux = factoryInstance;
+      } else {
+        console.log('🔧 DatabaseHandler: Creating new DatabaseDemux directly');
+        this.#demux = new DatabaseDemux(fyo.isElectron);
+      }
     }
   }
 
@@ -65,7 +85,38 @@ export class DatabaseHandler extends DatabaseBase {
     return !!this.dbPath;
   }
 
+  // ==========================================
+  // Environment-Aware Methods
+  // ==========================================
+  
+  /**
+   * Get current demux mode info for debugging
+   */
+  getDemuxInfo(): { mode: string; apiUrl?: string } {
+    const factoryConfig = DatabaseFactory.getConfig();
+    return {
+      mode: factoryConfig?.mode || (this.#fyo.isElectron ? 'electron' : 'browser'),
+      apiUrl: factoryConfig?.apiUrl
+    };
+  }
+
+  /**
+   * Check if running in browser mode with API
+   */
+  get isBrowserMode(): boolean {
+    return this.#fyo.isBrowser;
+  }
+
+  /**
+   * Get API URL if in browser mode
+   */
+  get apiUrl(): string | undefined {
+    const factoryConfig = DatabaseFactory.getConfig();
+    return factoryConfig?.apiUrl;
+  }
+
   async createNewDatabase(dbPath: string, countryCode: string) {
+    console.log(`🗄️  Creating new database: ${dbPath} (${this.getDemuxInfo().mode} mode)`);
     countryCode = await this.#demux.createNewDatabase(dbPath, countryCode);
     await this.init();
     this.dbPath = dbPath;
@@ -73,6 +124,7 @@ export class DatabaseHandler extends DatabaseBase {
   }
 
   async connectToDatabase(dbPath: string, countryCode?: string) {
+    console.log(`🔌 Connecting to database: ${dbPath} (${this.getDemuxInfo().mode} mode)`);
     countryCode = await this.#demux.connectToDatabase(dbPath, countryCode);
     await this.init();
     this.dbPath = dbPath;

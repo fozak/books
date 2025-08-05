@@ -44,10 +44,13 @@ export interface ConfigFile {
   dbPath: string;
   openCount: number;
 }
-
 export interface FyoConfig {
   DatabaseDemux?: DatabaseDemuxConstructor;
   AuthDemux?: AuthDemuxConstructor;
-  isElectron?: boolean;
+  isElectron?: boolean; // Keep for backward compatibility
   isTest?: boolean;
+  
+  // New factory options
+  forceMode?: 'electron' | 'browser'; // Override environment detection
+  apiUrl?: string; // Custom API URL for browser mode
 }
