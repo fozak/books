@@ -122,7 +122,7 @@ ${message}`);
           const res = await fetch(`${this.#apiBaseUrl}/api/schema/${encodeURIComponent(tableName)}`);
           return await res.json();
         });
-        return resp.data;
+        return resp;
       }
       case "getTableData": {
         const tableName = args[0];
@@ -140,7 +140,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get data for ${tableName}`);
-        return json.data;
+        return json;
       }
       case "getRecord": {
         const tableName = args[0];
@@ -149,7 +149,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get record ${id} from ${tableName}`);
-        return json.data;
+        return json;
       }
       case "searchRecords": {
         const tableName = args[0];
@@ -159,8 +159,15 @@ ${message}`);
         const params = new URLSearchParams({ q, field, limit: limit.toString() });
         const res = await fetch(`${this.#apiBaseUrl}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
         const json = await res.json();
-        if (!json.success)
+        if (!json || typeof json !== "object") {
+          throw new Error(`Invalid response for search in ${tableName}`);
+        }
+        if (!json.success) {
           throw new Error(`Failed to search in ${tableName}`);
+        }
+        if (!json.data || !Array.isArray(json.data.records)) {
+          throw new Error(`Malformed data received for ${tableName} search`);
+        }
         return json.data.records;
       }
       case "insertRecord": {
@@ -174,7 +181,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to insert record into ${tableName}`);
-        return json.data;
+        return json;
       }
       case "updateRecord": {
         const tableName = args[0];
@@ -188,7 +195,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to update record ${id} in ${tableName}`);
-        return json.data;
+        return json;
       }
       case "deleteRecord": {
         const tableName = args[0];
@@ -199,7 +206,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to delete record ${id} from ${tableName}`);
-        return json.data;
+        return json;
       }
       case "runQuery": {
         const sql = args[0];
@@ -212,7 +219,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to run query`);
-        return json.data;
+        return json;
       }
       case "getMetadata": {
         const tableName = args[0];
@@ -220,7 +227,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get metadata for ${tableName}`);
-        return json.data;
+        return json;
       }
       case "getSingleDoc": {
         const parent = args[0];
@@ -228,7 +235,7 @@ ${message}`);
         const json = await res.json();
         if (!json.success)
           throw new Error(`Failed to get single doc ${parent}`);
-        return json.data;
+        return json;
       }
       default:
         throw new NotImplemented(`Method ${method} is not implemented in browser mode`);
