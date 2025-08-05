@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DatabaseDemux Browser Test</title>
+</head>
+<body>
+<script type="module">
+  import { DatabaseDemux } from './db.js';  // Adjust extension/path if needed
+
+  async function test() {
+    const db = new DatabaseDemux(false, 'http://localhost:3001');
+
+    try {
+      const tables = await db.call('getTables');
+      console.log('Tables:', tables);
+
+      const schema = await db.getSchemaMap();
+      console.log('Schema Map:', schema);
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  }
+
+  test();
+</script>
+</body>
+</html>
