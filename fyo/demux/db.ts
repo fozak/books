@@ -108,7 +108,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
           const res = await fetch(`${this.#apiBaseUrl}/api/tables`);
           return await res.json();
         })) as { success: boolean; data: unknown };
-        return resp.data;
+        return resp;  // <-- just return resp (which is already resp.data)
       }
 
       case 'getSchema': {
@@ -117,7 +117,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
           const res = await fetch(`${this.#apiBaseUrl}/api/schema/${encodeURIComponent(tableName)}`);
           return await res.json();
         })) as { success: boolean; data: unknown };
-        return resp.data;
+        return resp;  // <-- just return resp (which is already resp.data)
       }
 
       case 'getTableData': {
@@ -132,7 +132,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}?${params.toString()}`);
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to get data for ${tableName}`);
-        return json.data;
+        return json;
       }
 
       case 'getRecord': {
@@ -141,20 +141,34 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}/${encodeURIComponent(String(id))}`);
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to get record ${id} from ${tableName}`);
-        return json.data;
+        return json;
       }
 
-      case 'searchRecords': {
-        const tableName = args[0] as string;
-        const q = args[1] as string;
-        const field = (args[2] as string) || 'name';
-        const limit = (args[3] as number) || 50;
-        const params = new URLSearchParams({ q, field, limit: limit.toString() });
-        const res = await fetch(`${this.#apiBaseUrl}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
-        const json = (await res.json()) as { success: boolean; data: { records: unknown[] } };
-        if (!json.success) throw new Error(`Failed to search in ${tableName}`);
-        return json.data.records;
-      }
+case 'searchRecords': {
+  const tableName = args[0] as string;
+  const q = args[1] as string;
+  const field = (args[2] as string) || 'name';
+  const limit = (args[3] as number) || 50;
+  const params = new URLSearchParams({ q, field, limit: limit.toString() });
+
+  const res = await fetch(`${this.#apiBaseUrl}/api/search/${encodeURIComponent(tableName)}?${params.toString()}`);
+  const json = await res.json();
+
+  if (!json || typeof json !== 'object') {
+    throw new Error(`Invalid response for search in ${tableName}`);
+  }
+
+  if (!json.success) {
+    throw new Error(`Failed to search in ${tableName}`);
+  }
+
+  if (!json.data || !Array.isArray(json.data.records)) {
+    throw new Error(`Malformed data received for ${tableName} search`);
+  }
+
+  return json.data.records;
+}
+
 
       case 'insertRecord': {
         const tableName = args[0] as string;
@@ -166,7 +180,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         });
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to insert record into ${tableName}`);
-        return json.data;
+        return json;
       }
 
       case 'updateRecord': {
@@ -180,7 +194,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         });
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to update record ${id} in ${tableName}`);
-        return json.data;
+        return json;
       }
 
       case 'deleteRecord': {
@@ -191,7 +205,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         });
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to delete record ${id} from ${tableName}`);
-        return json.data;
+        return json;
       }
 
       case 'runQuery': {
@@ -204,7 +218,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         });
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to run query`);
-        return json.data;
+        return json;
       }
 
       case 'getMetadata': {
@@ -212,7 +226,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         const res = await fetch(`${this.#apiBaseUrl}/api/meta/${encodeURIComponent(tableName)}`);
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to get metadata for ${tableName}`);
-        return json.data;
+        return json;
       }
 
       case 'getSingleDoc': {
@@ -220,7 +234,7 @@ export class DatabaseDemux extends DatabaseDemuxBase {
         const res = await fetch(`${this.#apiBaseUrl}/api/single/${encodeURIComponent(parent)}`);
         const json = (await res.json()) as { success: boolean; data: unknown };
         if (!json.success) throw new Error(`Failed to get single doc ${parent}`);
-        return json.data;
+        return json;
       }
 
       default:

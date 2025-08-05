@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DatabaseDemux Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #007cba;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #005a87; }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { color: #28a745; }
+    .error { color: #dc3545; }
+    .info { color: #17a2b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DatabaseDemux Test</h1>
+    <p>Make sure your server is running on <code>http://localhost:3001</code></p>
+
+    <div>
+      <button onclick="testConnection()">Test Connection</button>
+      <button onclick="testGetTables()">Get Tables</button>
+      <button onclick="testGetSchema()">Get Schema</button>
+      <button onclick="testGetData()">Get Table Data</button>
+      <button onclick="testSearch()">Test Search</button>
+      <button onclick="testQuery()">Run Query</button>
+      <button onclick="runAllTests()">Run All Tests</button>
+      <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div id="log" class="log">Ready to test...\n</div>
+  </div>
+
+  <script type="module">
+    import { DatabaseDemux } from './db.bundle.js';
+
+    // Initialize DatabaseDemux in browser mode
+    const db = new DatabaseDemux(false, 'http://localhost:3001');
+    let availableTables = [];
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+      logDiv.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    window.clearLog = () => {
+      document.getElementById('log').textContent = 'Log cleared...\n';
+    };
+
+    window.testConnection = async () => {
+      log('🔗 Testing connection to API server...', 'info');
+      try {
+        const response = await fetch('http://localhost:3001/api/tables');
+        if (response.ok) {
+          log('✅ Connection successful!', 'success');
+          return true;
+        } else {
+          log(`❌ Connection failed: ${response.status} ${response.statusText}`, 'error');
+          return false;
+        }
+      } catch (error) {
+        log(`❌ Connection error: ${error.message}`, 'error');
+        return false;
+      }
+    };
+
+    window.testGetTables = async () => {
+      log('📊 Testing getTables()...', 'info');
+      try {
+        const tables = await db.call('getTables');
+        availableTables = tables;
+        log(`✅ Found ${tables.length} tables: ${tables.join(', ')}`, 'success');
+        return tables;
+      } catch (error) {
+        log(`❌ getTables failed: ${error.message}`, 'error');
+        return [];
+      }
+    };
+
+    window.testGetSchema = async () => {
+      if (availableTables.length === 0) {
+        await testGetTables();
+      }
+      if (availableTables.length === 0) {
+        log('❌ No tables available for schema test', 'error');
+        return;
+      }
+      const tableName = availableTables[0];
+      log(`📋 Testing getSchema('${tableName}')...`, 'info');
+      try {
+        const schema = await db.call('getSchema', tableName);
+        log(`✅ Schema retrieved for ${tableName}`, 'success');
+        log(`   Fields: ${Object.keys(schema.fields || {}).join(', ')}`, 'info');
+        return schema;
+      } catch (error) {
+        log(`❌ getSchema failed: ${error.message}`, 'error');
+        return null;
+      }
+    };
+
+    window.testGetData = async () => {
+      if (availableTables.length === 0) {
+        await testGetTables();
+      }
+      if (availableTables.length === 0) {
+        log('❌ No tables available for data test', 'error');
+        return;
+      }
+      const tableName = availableTables[0];
+      log(`📁 Testing getTableData('${tableName}')...`, 'info');
+      try {
+        const data = await db.call('getTableData', tableName, { limit: 5 });
+        log(`✅ Retrieved ${data.length} records from ${tableName}`, 'success');
+        if (data.length > 0) {
+          log(`   Sample record keys: ${Object.keys(data[0]).join(', ')}`, 'info');
+        }
+        return data;
+      } catch (error) {
+        log(`❌ getTableData failed: ${error.message}`, 'error');
+        return [];
+      }
+    };
+
+    window.testSearch = async () => {
+      if (availableTables.length === 0) {
+        await testGetTables();
+      }
+      if (availableTables.length === 0) {
+        log('❌ No tables available for search test', 'error');
+        return;
+      }
+      const tableName = availableTables[0];
+      log(`🔎 Testing searchRecords('${tableName}')...`, 'info');
+      try {
+        const results = await db.call('searchRecords', tableName, 'test', 'name', 10);
+        log(`✅ Search completed: ${results.length} results found`, 'success');
+        return results;
+      } catch (error) {
+        log(`❌ searchRecords failed: ${error.message}`, 'error');
+        return [];
+      }
+    };
+
+    window.testQuery = async () => {
+      if (availableTables.length === 0) {
+        await testGetTables();
+      }
+      if (availableTables.length === 0) {
+        log('❌ No tables available for query test', 'error');
+        return;
+      }
+      const tableName = availableTables[0];
+      const sql = `SELECT COUNT(*) as total FROM "${tableName}"`;
+      log(`⚡ Testing runQuery('${sql}')...`, 'info');
+      try {
+        const result = await db.call('runQuery', sql);
+        log(`✅ Query executed successfully`, 'success');
+        log(`   Result: ${JSON.stringify(result)}`, 'info');
+        return result;
+      } catch (error) {
+        log(`❌ runQuery failed: ${error.message}`, 'error');
+        return null;
+      }
+    };
+
+    window.runAllTests = async () => {
+      log('🚀 Running all tests...', 'info');
+      log('='.repeat(50), 'info');
+
+      const results = {
+        connection: await testConnection(),
+        tables: (await testGetTables()).length > 0,
+        schema: (await testGetSchema()) !== null,
+        data: (await testGetData()).length >= 0,
+        search: (await testSearch()).length >= 0,
+        query: (await testQuery()) !== null
+      };
+
+      log('='.repeat(50), 'info');
+      log('📊 TEST SUMMARY:', 'info');
+      const passed = Object.values(results).filter(Boolean).length;
+      const total = Object.keys(results).length;
+      log(`✅ Passed: ${passed}/${total}`, passed === total ? 'success' : 'error');
+
+      Object.entries(results).forEach(([test, passed]) => {
+        log(`${passed ? '✅' : '❌'} ${test}`, passed ? 'success' : 'error');
+      });
+    };
+
+    // Expose db globally for manual testing
+    window.db = db;
+
+    log('DatabaseDemux loaded and ready for testing!', 'success');
+    log('Available methods: testConnection, testGetTables, testGetSchema, testGetData, testSearch, testQuery, runAllTests', 'info');
+    log('You can also use window.db directly for manual testing', 'info');
+  </script>
+</body>
+</html>
