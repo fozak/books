@@ -18,9 +18,9 @@
     "uitest": "node uitest/index.mjs | tap-spec",
     "lint": "eslint . --ext ts,vue",
     "format": "prettier --write .",
-    "api:dev": "ts-node api-server/dev.ts",
-    "api:start": "ts-node api-server/index.ts",
-    "api:build": "tsc api-server/index.ts --outDir dist/api",
+    "api:dev": "node --loader ts-node/esm api-server/dev.ts",
+    "api:start": "node --loader ts-node/esm api-server/index.ts",
+    "api:build": "tsc api-server/index.ts --outDir dist/api --module commonjs --target es2020",
     "api:prod": "node dist/api/index.js"
   },
   "dependencies": {
