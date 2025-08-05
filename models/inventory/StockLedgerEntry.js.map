@@ -1,0 +1,1 @@
+{"version":3,"file":"StockLedgerEntry.js","sourceRoot":"","sources":["StockLedgerEntry.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,GAAG,EAAE,MAAM,eAAe,CAAC;AAIpC,MAAM,OAAO,gBAAiB,SAAQ,GAAG;IAWvC,MAAM,CAAU,mBAAmB;QACjC,OAAO;YACL,OAAO,EAAE;gBACP,MAAM;gBACN,MAAM;gBACN,UAAU;gBACV,MAAM;gBACN,UAAU;gBACV,eAAe;aAChB;SACF,CAAC;IACJ,CAAC;CACF"}

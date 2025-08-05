@@ -1,0 +1,99 @@
+/**
+ * General purpose utils used by the frontend.
+ */
+import { t } from 'fyo';
+import { Doc } from 'fyo/model/doc';
+import { isPesa } from 'fyo/utils';
+import { DuplicateEntryError, LinkValidationError, } from 'fyo/utils/errors';
+import { FieldTypeEnum } from 'schemas/types';
+import { fyo } from 'src/initFyo';
+export function stringifyCircular(obj, ignoreCircular = false, convertDocument = false) {
+    const cacheKey = [];
+    const cacheValue = [];
+    return JSON.stringify(obj, (key, value) => {
+        if (typeof value !== 'object' || value === null) {
+            cacheKey.push(key);
+            cacheValue.push(value);
+            return value;
+        }
+        if (cacheValue.includes(value)) {
+            const circularKey = cacheKey[cacheValue.indexOf(value)] || '{self}';
+            return ignoreCircular ? undefined : `[Circular:${circularKey}]`;
+        }
+        cacheKey.push(key);
+        cacheValue.push(value);
+        if (convertDocument && value instanceof Doc) {
+            return value.getValidDict();
+        }
+        return value;
+    });
+}
+export function fuzzyMatch(input, target) {
+    const keywordLetters = [...input];
+    const candidateLetters = [...target];
+    let keywordLetter = keywordLetters.shift();
+    let candidateLetter = candidateLetters.shift();
+    let isMatch = true;
+    let distance = 0;
+    while (keywordLetter && candidateLetter) {
+        if (keywordLetter === candidateLetter) {
+            keywordLetter = keywordLetters.shift();
+        }
+        else if (keywordLetter.toLowerCase() === candidateLetter.toLowerCase()) {
+            keywordLetter = keywordLetters.shift();
+            distance += 0.5;
+        }
+        else {
+            distance += 1;
+        }
+        candidateLetter = candidateLetters.shift();
+    }
+    if (keywordLetter !== undefined) {
+        distance = Number.MAX_SAFE_INTEGER;
+        isMatch = false;
+    }
+    else {
+        distance += candidateLetters.length;
+    }
+    return { isMatch, distance };
+}
+export function convertPesaValuesToFloat(obj) {
+    Object.keys(obj).forEach((key) => {
+        const value = obj[key];
+        if (!isPesa(value)) {
+            return;
+        }
+        obj[key] = value.float;
+    });
+}
+export function getErrorMessage(e, doc) {
+    const errorMessage = e.message || t `An error occurred.`;
+    let { schemaName, name } = doc ?? {};
+    if (!doc) {
+        schemaName = e.more?.schemaName;
+        name = e.more?.value;
+    }
+    if (!schemaName || !name) {
+        return errorMessage;
+    }
+    const label = fyo.db.schemaMap[schemaName]?.label ?? schemaName;
+    if (e instanceof LinkValidationError) {
+        return t `${label} ${name} is linked with existing records.`;
+    }
+    else if (e instanceof DuplicateEntryError) {
+        return t `${label} ${name} already exists.`;
+    }
+    return errorMessage;
+}
+export function isNumeric(fieldtype) {
+    if (typeof fieldtype !== 'string') {
+        fieldtype = fieldtype?.fieldtype;
+    }
+    const numericTypes = [
+        FieldTypeEnum.Int,
+        FieldTypeEnum.Float,
+        FieldTypeEnum.Currency,
+    ];
+    return numericTypes.includes(fieldtype);
+}
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"ItemGroup.js","sourceRoot":"","sources":["ItemGroup.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,GAAG,EAAE,MAAM,eAAe,CAAC;AAGpC,MAAM,OAAO,SAAU,SAAQ,GAAG;IAChC,MAAM,CAAC,mBAAmB;QACxB,OAAO;YACL,OAAO,EAAE,CAAC,MAAM,EAAE,KAAK,EAAE,SAAS,CAAC;SACpC,CAAC;IACJ,CAAC;CACF"}

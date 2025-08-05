@@ -1,0 +1,1 @@
+{"version":3,"file":"Batch.js","sourceRoot":"","sources":["Batch.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,GAAG,EAAE,MAAM,eAAe,CAAC;AAGpC,MAAM,OAAO,KAAM,SAAQ,GAAG;IAC5B,MAAM,CAAC,mBAAmB;QACxB,OAAO;YACL,OAAO,EAAE,CAAC,MAAM,EAAE,YAAY,EAAE,iBAAiB,CAAC;SACnD,CAAC;IACJ,CAAC;CACF"}

@@ -1,0 +1,20 @@
+export const FieldTypeEnum = {
+    Data: 'Data',
+    Select: 'Select',
+    Link: 'Link',
+    Date: 'Date',
+    Datetime: 'Datetime',
+    Table: 'Table',
+    AutoComplete: 'AutoComplete',
+    Check: 'Check',
+    AttachImage: 'AttachImage',
+    DynamicLink: 'DynamicLink',
+    Int: 'Int',
+    Float: 'Float',
+    Currency: 'Currency',
+    Text: 'Text',
+    Color: 'Color',
+    Button: 'Button',
+    Attachment: 'Attachment',
+};
+//# sourceMappingURL=types.js.map

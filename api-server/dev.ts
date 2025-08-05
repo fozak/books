@@ -1,8 +1,6 @@
 import path from 'path';
-import FrappeBooksAPI from './server';
+import FrappeBooksAPI from './server.js';
 
-// Development configuration
-process.env.NODE_ENV = 'development';
 const PORT = 3001;
 const DB_PATH = path.join(process.cwd(), 'frappe-books-dev.db');
 
@@ -13,11 +11,10 @@ console.log('🐛 Debug mode enabled');
 
 const api = new FrappeBooksAPI(DB_PATH);
 
-// Development-friendly shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Development server stopping...');
   await api.stop();
   process.exit(0);
 });
 
-api.start(PORT);
+await api.start(PORT);

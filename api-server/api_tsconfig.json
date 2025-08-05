@@ -2,11 +2,10 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",                 // 👈 necessary for ESM
-    "lib": ["ES2020"],
-    "moduleResolution": "node",         // 👈 required for ESM resolution
+    "module": "ESNext",
+    "moduleResolution": "node",
     "outDir": "../dist/api",
-    "rootDir": ".",
+    "rootDir": "..",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,6 +14,19 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "../api-server/**/*",
+    "../backend/**/*",
+    "../schemas/**/*",
+    "../models/**/*",
+    "../src/**/*",
+    "../utils/**/*",
+    "../fyo/**/*",
+    "../reports/**/*",
+    "../main/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
