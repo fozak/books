@@ -16,6 +16,9 @@ class SimpleFrappeAPI {
     this.app.use(cors());
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
+
+     // ✅ Add this line below:
+    this.app.use('/demux', express.static(path.join(__dirname, '../fyo/demux')));
     
     // Simple logging
     this.app.use((req, res, next) => {

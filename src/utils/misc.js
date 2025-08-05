@@ -112,7 +112,7 @@ export const docsPathMap = {
     ChartOfAccounts: 'books/chart-of-accounts',
 };
 export async function getDataURL(type, data) {
-    const blob = new Blob([data], { type });
+    const blob = new Blob([new Uint8Array(data)], { type });
     return new Promise((resolve) => {
         const fr = new FileReader();
         fr.addEventListener('loadend', () => {
