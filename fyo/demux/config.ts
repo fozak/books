@@ -1,22 +1,20 @@
 import { ConfigMap } from 'fyo/core/types';
 import type { IPC } from 'main/preload';
 
-// We declare 'ipc' globally only if running in Electron with preload exposing it.
-// In browser, 'ipc' is undefined and won't be used.
-declare const ipc: IPC | undefined;
-
 export class Config {
   config: Map<string, unknown> | IPC['store'];
 
-  constructor(isElectron: boolean) {
-    if (isElectron && typeof ipc !== 'undefined' && ipc?.store) {
-      // Electron mode with IPC store available
-      this.config = ipc.store;
-    } else {
-      // Browser mode or Electron without ipc store fallback to Map
-      this.config = new Map();
-    }
+constructor(isElectron: boolean) {
+  // Access 'ipc' safely from globalThis without direct reference
+  const ipcRuntime = (globalThis as any).ipc as IPC | undefined;
+
+  if (isElectron && ipcRuntime && ipcRuntime.store) {
+    this.config = ipcRuntime.store;
+  } else {
+    this.config = new Map();
   }
+}
+
 
   get<K extends keyof ConfigMap>(
     key: K,
@@ -34,4 +32,5 @@ export class Config {
     this.config.delete(key);
   }
 }
+
 
