@@ -2,16 +2,16 @@ import { Doc } from 'fyo/model/doc';
 import { DEFAULT_CURRENCY } from 'fyo/utils/consts';
 import { FieldTypeEnum } from 'schemas/types';
 export class TaxSummary extends Doc {
-    constructor(schema, data, fyo) {
-        super(schema, data, fyo);
-        this.getCurrencies = {};
-        this._setGetCurrencies();
-    }
     get exchangeRate() {
         return this.parentdoc?.exchangeRate ?? 1;
     }
     get currency() {
         return this.parentdoc?.currency ?? DEFAULT_CURRENCY;
+    }
+    constructor(schema, data, fyo) {
+        super(schema, data, fyo);
+        this.getCurrencies = {};
+        this._setGetCurrencies();
     }
     _getCurrency() {
         if (this.exchangeRate === 1) {

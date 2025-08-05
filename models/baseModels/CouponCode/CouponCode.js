@@ -19,7 +19,7 @@ export class CouponCode extends Doc {
                     return;
                 }
                 const [pricingRuleData] = await this.pricingRuleData();
-                if (pricingRuleData?.minAmount.isZero() &&
+                if ((pricingRuleData?.minAmount).isZero() &&
                     pricingRuleData.maxAmount.isZero()) {
                     return;
                 }
@@ -39,7 +39,7 @@ export class CouponCode extends Doc {
                     return;
                 }
                 const [pricingRuleData] = await this.pricingRuleData();
-                if (pricingRuleData?.minAmount.isZero() &&
+                if ((pricingRuleData?.minAmount).isZero() &&
                     pricingRuleData.maxAmount.isZero()) {
                     return;
                 }

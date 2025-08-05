@@ -2,7 +2,7 @@ import { Doc } from 'fyo/model/doc';
 import { ValidationError } from 'fyo/utils/errors';
 import { t } from 'fyo/utils/translation';
 import { getCountryInfo } from 'utils/misc';
-export default class SystemSettings extends Doc {
+class SystemSettings extends Doc {
     constructor() {
         super(...arguments);
         this.validations = {
@@ -33,4 +33,5 @@ SystemSettings.lists = {
         return [...new Set(currencies)];
     },
 };
+export default SystemSettings;
 //# sourceMappingURL=SystemSettings.js.map

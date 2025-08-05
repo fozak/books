@@ -8,6 +8,14 @@ import { Report } from 'reports/Report';
 import { isNumeric } from 'src/utils';
 import { getRawStockLedgerEntries, getStockLedgerEntries } from './helpers';
 export class StockLedger extends Report {
+    get hasBatches() {
+        return !!this.fyo.singles.InventorySettings
+            .enableBatches;
+    }
+    get hasSerialNumbers() {
+        return !!this.fyo.singles.InventorySettings
+            .enableSerialNumber;
+    }
     constructor(fyo) {
         super(fyo);
         this.usePagination = true;
@@ -16,14 +24,6 @@ export class StockLedger extends Report {
         this.referenceType = 'All';
         this.groupBy = 'none';
         this._setObservers();
-    }
-    get hasBatches() {
-        return !!this.fyo.singles.InventorySettings
-            .enableBatches;
-    }
-    get hasSerialNumbers() {
-        return !!this.fyo.singles.InventorySettings
-            .enableSerialNumber;
     }
     setDefaultFilters() {
         if (!this.toDate) {

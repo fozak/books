@@ -10,6 +10,64 @@ import { getIsNullOrUndef, joinMapLists, safeParseFloat } from 'utils';
 import { AccountFieldEnum, PaymentTypeEnum } from '../Payment/types';
 import { getLinkedEntries } from 'src/utils/doc';
 export class Invoice extends Transactional {
+    get isSales() {
+        return (this.schemaName === 'SalesInvoice' || this.schemaName == 'SalesQuote');
+    }
+    get isQuote() {
+        return this.schemaName == 'SalesQuote';
+    }
+    get enableDiscounting() {
+        return !!this.fyo.singles?.AccountingSettings?.enableDiscounting;
+    }
+    get isMultiCurrency() {
+        if (!this.currency) {
+            return false;
+        }
+        return this.fyo.singles.SystemSettings.currency !== this.currency;
+    }
+    get companyCurrency() {
+        return this.fyo.singles.SystemSettings?.currency ?? DEFAULT_CURRENCY;
+    }
+    get stockTransferSchemaName() {
+        return this.isSales
+            ? ModelNameEnum.Shipment
+            : ModelNameEnum.PurchaseReceipt;
+    }
+    get hasLinkedTransfers() {
+        if (!this.submitted) {
+            return false;
+        }
+        return this.getStockTransferred() > 0;
+    }
+    get hasLinkedPayments() {
+        if (!this.submitted) {
+            return false;
+        }
+        return !this.baseGrandTotal?.eq(this.outstandingAmount);
+    }
+    get autoPaymentAccount() {
+        const fieldname = this.isSales
+            ? 'salesPaymentAccount'
+            : 'purchasePaymentAccount';
+        const value = this.fyo.singles.Defaults?.[fieldname];
+        if (typeof value === 'string' && value.length) {
+            return value;
+        }
+        return null;
+    }
+    get autoStockTransferLocation() {
+        const fieldname = this.isSales
+            ? 'shipmentLocation'
+            : 'purchaseReceiptLocation';
+        const value = this.fyo.singles.Defaults?.[fieldname];
+        if (typeof value === 'string' && value.length) {
+            return value;
+        }
+        return null;
+    }
+    get isReturn() {
+        return !!this.returnAgainst;
+    }
     constructor(schema, data, fyo) {
         super(schema, data, fyo);
         this._taxes = {};
@@ -173,64 +231,6 @@ export class Invoice extends Transactional {
             outstandingAmount: () => this.companyCurrency,
         };
         this._setGetCurrencies();
-    }
-    get isSales() {
-        return (this.schemaName === 'SalesInvoice' || this.schemaName == 'SalesQuote');
-    }
-    get isQuote() {
-        return this.schemaName == 'SalesQuote';
-    }
-    get enableDiscounting() {
-        return !!this.fyo.singles?.AccountingSettings?.enableDiscounting;
-    }
-    get isMultiCurrency() {
-        if (!this.currency) {
-            return false;
-        }
-        return this.fyo.singles.SystemSettings.currency !== this.currency;
-    }
-    get companyCurrency() {
-        return this.fyo.singles.SystemSettings?.currency ?? DEFAULT_CURRENCY;
-    }
-    get stockTransferSchemaName() {
-        return this.isSales
-            ? ModelNameEnum.Shipment
-            : ModelNameEnum.PurchaseReceipt;
-    }
-    get hasLinkedTransfers() {
-        if (!this.submitted) {
-            return false;
-        }
-        return this.getStockTransferred() > 0;
-    }
-    get hasLinkedPayments() {
-        if (!this.submitted) {
-            return false;
-        }
-        return !this.baseGrandTotal?.eq(this.outstandingAmount);
-    }
-    get autoPaymentAccount() {
-        const fieldname = this.isSales
-            ? 'salesPaymentAccount'
-            : 'purchasePaymentAccount';
-        const value = this.fyo.singles.Defaults?.[fieldname];
-        if (typeof value === 'string' && value.length) {
-            return value;
-        }
-        return null;
-    }
-    get autoStockTransferLocation() {
-        const fieldname = this.isSales
-            ? 'shipmentLocation'
-            : 'purchaseReceiptLocation';
-        const value = this.fyo.singles.Defaults?.[fieldname];
-        if (typeof value === 'string' && value.length) {
-            return value;
-        }
-        return null;
-    }
-    get isReturn() {
-        return !!this.returnAgainst;
     }
     async validate() {
         await super.validate();

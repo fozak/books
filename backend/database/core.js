@@ -24,7 +24,7 @@ import { getDefaultMetaFieldValueMap, sqliteTypeMap, SYSTEM } from '../helpers';
  * only for schemas that are SingleValue. Else they have to be passed by the caller in
  * the `fieldValueMap`.
  */
-export default class DatabaseCore extends DatabaseBase {
+class DatabaseCore extends DatabaseBase {
     constructor(dbPath) {
         super();
         _DatabaseCore_instances.add(this);
@@ -690,4 +690,5 @@ _DatabaseCore_instances = new WeakSet(), _DatabaseCore_getCreateAlterList = asyn
 }, _DatabaseCore_getTableFields = function _DatabaseCore_getTableFields(schemaName) {
     return this.schemaMap[schemaName].fields.filter((f) => f.fieldtype === FieldTypeEnum.Table);
 };
+export default DatabaseCore;
 //# sourceMappingURL=core.js.map

@@ -1,4 +1,4 @@
-var _Converter_instances, _Converter_toDocValueMap, _Converter_toRawValueMap;
+var _Converter_instances, _a, _Converter_toDocValueMap, _Converter_toRawValueMap;
 import { __classPrivateFieldGet } from "tslib";
 import { Doc } from 'fyo/model/doc';
 import { isPesa } from 'fyo/utils';
@@ -87,7 +87,7 @@ export class Converter {
         }
     }
 }
-_Converter_instances = new WeakSet(), _Converter_toDocValueMap = function _Converter_toDocValueMap(schemaName, rawValueMap) {
+_a = Converter, _Converter_instances = new WeakSet(), _Converter_toDocValueMap = function _Converter_toDocValueMap(schemaName, rawValueMap) {
     const fieldValueMap = this.db.fieldMap[schemaName];
     const docValueMap = {};
     for (const fieldname in rawValueMap) {
@@ -101,7 +101,7 @@ _Converter_instances = new WeakSet(), _Converter_toDocValueMap = function _Conve
             docValueMap[fieldname] = rawValue.map((rv) => __classPrivateFieldGet(this, _Converter_instances, "m", _Converter_toDocValueMap).call(this, parentSchemaName, rv));
         }
         else {
-            docValueMap[fieldname] = Converter.toDocValue(rawValue, field, this.fyo);
+            docValueMap[fieldname] = _a.toDocValue(rawValue, field, this.fyo);
         }
     }
     return docValueMap;
@@ -121,7 +121,7 @@ _Converter_instances = new WeakSet(), _Converter_toDocValueMap = function _Conve
             });
         }
         else {
-            rawValueMap[fieldname] = Converter.toRawValue(docValue, field, this.fyo);
+            rawValueMap[fieldname] = _a.toRawValue(docValue, field, this.fyo);
         }
     }
     return rawValueMap;

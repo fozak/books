@@ -40,7 +40,7 @@ export class GeneralLedger extends LedgerReport {
          * Set the closing row
          */
         consolidated.push({
-            name: -2,
+            name: -2, // Bold
             account: t `Closing`,
             date: null,
             debit: totalDebit,
@@ -134,7 +134,7 @@ export class GeneralLedger extends LedgerReport {
     }
     _pushBlankEntry(entries) {
         entries.push({
-            name: -3,
+            name: -3, // Empty
             account: '',
             date: null,
             debit: null,
@@ -166,7 +166,7 @@ export class GeneralLedger extends LedgerReport {
              */
             if (this.groupBy !== 'none') {
                 map.get(key)?.push({
-                    name: -1,
+                    name: -1, // Italics
                     account: t `Total`,
                     date: null,
                     debit,

@@ -153,9 +153,9 @@ export class BespokeQueries {
             return;
         }
         const docItems = (await docItemsQuery);
-        const docItemsMap = __classPrivateFieldGet(BespokeQueries, _a, "m", _BespokeQueries_getDocItemMap).call(BespokeQueries, docItems);
-        const returnedItemsMap = __classPrivateFieldGet(BespokeQueries, _a, "m", _BespokeQueries_getDocItemMap).call(BespokeQueries, returnedItems);
-        const returnBalanceItems = __classPrivateFieldGet(BespokeQueries, _a, "m", _BespokeQueries_getReturnBalanceItemQtyMap).call(BespokeQueries, docItemsMap, returnedItemsMap);
+        const docItemsMap = __classPrivateFieldGet(_a, _a, "m", _BespokeQueries_getDocItemMap).call(_a, docItems);
+        const returnedItemsMap = __classPrivateFieldGet(_a, _a, "m", _BespokeQueries_getDocItemMap).call(_a, returnedItems);
+        const returnBalanceItems = __classPrivateFieldGet(_a, _a, "m", _BespokeQueries_getReturnBalanceItemQtyMap).call(_a, docItemsMap, returnedItemsMap);
         return returnBalanceItems;
     }
     static async getPOSTransactedAmount(db, fromDate, toDate, lastShiftClosingDate) {

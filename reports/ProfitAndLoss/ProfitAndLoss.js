@@ -42,8 +42,7 @@ export class ProfitAndLoss extends AccountReport {
     getReportDataFromRows(incomeRows, expenseRows, incomeRoots, expenseRoots) {
         if (incomeRoots &&
             incomeRoots.length &&
-            !expenseRoots &&
-            !expenseRoots.length) {
+            (!expenseRoots || !expenseRoots.length)) {
             return this.getIncomeOrExpenseRows(incomeRoots, incomeRows, t `Total Income (Credit)`);
         }
         if (expenseRoots &&

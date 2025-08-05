@@ -9,6 +9,43 @@ import { safeParseFloat } from 'utils/index';
 import { isPesa } from 'fyo/utils';
 import { getItemRateFromPriceList, getPricingRule } from 'models/helpers';
 export class InvoiceItem extends Doc {
+    get isSales() {
+        return (this.schemaName === 'SalesInvoiceItem' ||
+            this.schemaName === 'SalesQuoteItem');
+    }
+    get date() {
+        return this.parentdoc?.date ?? undefined;
+    }
+    get party() {
+        return this.parentdoc?.party ?? undefined;
+    }
+    get priceList() {
+        return this.parentdoc?.priceList ?? undefined;
+    }
+    get discountAfterTax() {
+        return !!this?.parentdoc?.discountAfterTax;
+    }
+    get enableDiscounting() {
+        return !!this.fyo.singles?.AccountingSettings?.enableDiscounting;
+    }
+    get enableInventory() {
+        return !!this.fyo.singles?.AccountingSettings?.enableInventory;
+    }
+    get currency() {
+        return this.parentdoc?.currency ?? DEFAULT_CURRENCY;
+    }
+    get exchangeRate() {
+        return this.parentdoc?.exchangeRate ?? 1;
+    }
+    get isMultiCurrency() {
+        return this.parentdoc?.isMultiCurrency ?? false;
+    }
+    get isReturn() {
+        return !!this.parentdoc?.isReturn;
+    }
+    get pricingRuleDetail() {
+        return this.parentdoc?.pricingRuleDetail;
+    }
     constructor(schema, data, fyo) {
         super(schema, data, fyo);
         this.formulas = {
@@ -355,43 +392,6 @@ export class InvoiceItem extends Doc {
         };
         this.getCurrencies = {};
         this._setGetCurrencies();
-    }
-    get isSales() {
-        return (this.schemaName === 'SalesInvoiceItem' ||
-            this.schemaName === 'SalesQuoteItem');
-    }
-    get date() {
-        return this.parentdoc?.date ?? undefined;
-    }
-    get party() {
-        return this.parentdoc?.party ?? undefined;
-    }
-    get priceList() {
-        return this.parentdoc?.priceList ?? undefined;
-    }
-    get discountAfterTax() {
-        return !!this?.parentdoc?.discountAfterTax;
-    }
-    get enableDiscounting() {
-        return !!this.fyo.singles?.AccountingSettings?.enableDiscounting;
-    }
-    get enableInventory() {
-        return !!this.fyo.singles?.AccountingSettings?.enableInventory;
-    }
-    get currency() {
-        return this.parentdoc?.currency ?? DEFAULT_CURRENCY;
-    }
-    get exchangeRate() {
-        return this.parentdoc?.exchangeRate ?? 1;
-    }
-    get isMultiCurrency() {
-        return this.parentdoc?.isMultiCurrency ?? false;
-    }
-    get isReturn() {
-        return !!this.parentdoc?.isReturn;
-    }
-    get pricingRuleDetail() {
-        return this.parentdoc?.pricingRuleDetail;
     }
     async getTotalTaxRate() {
         if (!this.tax) {
