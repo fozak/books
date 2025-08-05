@@ -125,16 +125,22 @@ ${message}`);
         return resp;
       }
       case "getTableData": {
-        const [tableName, options] = args;
+        const tableName = args[0];
+        const options = args[1];
         const params = new URLSearchParams();
         if (options?.limit)
-          params.set("limit", options.limit.toString());
+          params.append("limit", options.limit.toString());
         if (options?.offset)
-          params.set("offset", options.offset.toString());
-        return await this.#handleDBCall(async () => {
-          const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}?${params}`);
-          return await res.json();
-        });
+          params.append("offset", options.offset.toString());
+        if (options?.orderBy)
+          params.append("orderBy", options.orderBy);
+        if (options?.order)
+          params.append("order", options.order);
+        const res = await fetch(`${this.#apiBaseUrl}/api/data/${encodeURIComponent(tableName)}?${params.toString()}`);
+        const json = await res.json();
+        if (!json.success)
+          throw new Error(`Failed to get data for ${tableName}`);
+        return json.data.records;
       }
       case "getRecord": {
         const tableName = args[0];
