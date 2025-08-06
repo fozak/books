@@ -1,20 +1,20 @@
 import { ConfigMap } from 'fyo/core/types';
 import type { IPC } from 'main/preload';
 
+
 export class Config {
   config: Map<string, unknown> | IPC['store'];
 
-constructor(isElectron: boolean) {
-  // Access 'ipc' safely from globalThis without direct reference
-  const ipcRuntime = (globalThis as any).ipc as IPC | undefined;
+  constructor(isElectron: boolean) {
+    // In Electron, preload exposes 'ipc' on window (globalThis).
+    const ipcRuntime = (globalThis as any).ipc as IPC | undefined;
 
-  if (isElectron && ipcRuntime && ipcRuntime.store) {
-    this.config = ipcRuntime.store;
-  } else {
-    this.config = new Map();
+    if (isElectron && ipcRuntime && ipcRuntime.store) {
+      this.config = ipcRuntime.store;
+    } else {
+      this.config = new Map();
+    }
   }
-}
-
 
   get<K extends keyof ConfigMap>(
     key: K,
@@ -32,5 +32,3 @@ constructor(isElectron: boolean) {
     this.config.delete(key);
   }
 }
-
-
